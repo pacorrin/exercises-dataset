@@ -362,7 +362,7 @@
     }
     .selector-group { display: flex; flex-direction: column; gap: 5px; }
     .selector-label { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: .06em; }
-    .selector-tabs { display: flex; gap: 2px; }
+    .selector-tabs { display: flex; gap: 2px; flex-wrap: wrap; }
     .selector-btn {
       font-size: 12px;
       font-weight: 500;
@@ -552,7 +552,7 @@
             <div class="step-num">2</div>
             <div class="step-body">
               <h3 class="step-title">Import Data</h3>
-              <p class="step-desc">Generate a <code>.sql</code> file with all 1,324 INSERT statements. The file is built entirely in your browser — nothing is uploaded to any server.</p>
+              <p class="step-desc">Generate a <code>.sql</code> file with all 1,324 INSERT statements. Each row keeps the English <code>name</code> and adds <code>name_es</code>. The file is built entirely in your browser — nothing is uploaded to any server.</p>
               <div style="display:flex;align-items:center;gap:0;">
                 <button class="generate-btn" id="generate-sql-btn">
                   <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="14" height="14">
@@ -698,6 +698,7 @@
               <button class="selector-btn" data-fw="spring">Spring Boot</button>
               <button class="selector-btn" data-fw="laravel">Laravel</button>
               <button class="selector-btn" data-fw="gin">Gin (Go)</button>
+              <button class="selector-btn" data-fw="nextjs">Next.js</button>
             </div>
           </div>
           <div class="selector-group">
@@ -738,7 +739,8 @@
 const DB_SQL = {
   mssql: `CREATE TABLE exercises (
   id                NVARCHAR(10)  PRIMARY KEY,
-  name              NVARCHAR(255) NOT NULL,
+  name              NVARCHAR(255) NOT NULL,  -- English
+  name_es           NVARCHAR(255),                 -- Spanish
   category          NVARCHAR(100),
   body_part         NVARCHAR(100),
   equipment         NVARCHAR(100),
@@ -760,7 +762,8 @@ const DB_SQL = {
 );`,
   postgresql: `CREATE TABLE exercises (
   id                VARCHAR(10)  PRIMARY KEY,
-  name              VARCHAR(255) NOT NULL,
+  name              VARCHAR(255) NOT NULL,  -- English
+  name_es           VARCHAR(255),            -- Spanish
   category          VARCHAR(100),
   body_part         VARCHAR(100),
   equipment         VARCHAR(100),
@@ -782,7 +785,8 @@ const DB_SQL = {
 );`,
   mysql: `CREATE TABLE exercises (
   id                VARCHAR(10)  PRIMARY KEY,
-  name              VARCHAR(255) NOT NULL,
+  name              VARCHAR(255) NOT NULL,  -- English
+  name_es           VARCHAR(255),            -- Spanish
   category          VARCHAR(100),
   body_part         VARCHAR(100),
   equipment         VARCHAR(100),
@@ -804,7 +808,8 @@ const DB_SQL = {
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`,
   sqlite: `CREATE TABLE exercises (
   id                TEXT PRIMARY KEY,
-  name              TEXT NOT NULL,
+  name              TEXT NOT NULL,  -- English
+  name_es           TEXT,            -- Spanish
   category          TEXT,
   body_part         TEXT,
   equipment         TEXT,
@@ -883,6 +888,7 @@ async function getExercise(id) {
 // Usage
 const exercise = await getExercise('0001');
 console.log(exercise.name);        // "Barbell Bench Press"
+console.log(exercise.name_es);     // "press de banca con barra"
 console.log(exercise.category);    // "Strength"
 console.log(exercise.gif_url);     // "videos/0001.gif"`,
 
@@ -934,7 +940,8 @@ const result = await getExercisesFiltered({
   page: 1,
   limit: 20,
 });
-console.log(result.data[0].name); // e.g. "Barbell Bench Press"`,
+console.log(result.data[0].name);    // e.g. "Barbell Bench Press"
+console.log(result.data[0].name_es); // e.g. "press de banca con barra"`,
   },
 
   python: {
@@ -952,6 +959,7 @@ def get_exercise(exercise_id: str) -> dict:
 # Usage
 exercise = get_exercise("0001")
 print(exercise["name"])      # Barbell Bench Press
+print(exercise["name_es"])   # press de banca con barra
 print(exercise["category"])  # Strength
 print(exercise["gif_url"])   # videos/0001.gif`,
 
@@ -1007,7 +1015,8 @@ result = get_exercises_filtered(
     page=1,
     limit=20,
 )
-print(result["data"][0]["name"])  # e.g. Barbell Bench Press`,
+print(result["data"][0]["name"])     # e.g. Barbell Bench Press
+print(result["data"][0]["name_es"])  # e.g. press de banca con barra`,
   },
 
   csharp: {
@@ -1027,12 +1036,13 @@ async Task<Exercise?> GetExerciseAsync(string id)
 // Usage
 var exercise = await GetExerciseAsync("0001");
 Console.WriteLine(exercise?.Name);     // Barbell Bench Press
+Console.WriteLine(exercise?.NameEs);   // press de banca con barra
 Console.WriteLine(exercise?.Category); // Strength
 Console.WriteLine(exercise?.GifUrl);   // videos/0001.gif
 
 // Model
 record Exercise(
-    string Id, string Name, string Category, string BodyPart,
+    string Id, string Name, string? NameEs, string Category, string BodyPart,
     string Equipment, string? InstructionsEn, string? InstructionsEs, string? InstructionsIt, string? InstructionsTr, string? InstructionsRu,
     string MuscleGroup, string[] SecondaryMuscles, string Target,
     string Image, string GifUrl, string? CreatedAt
@@ -1057,7 +1067,7 @@ Console.WriteLine(result.Total);      // 1324
 Console.WriteLine(result.TotalPages); // 67
 
 // Models
-record Exercise(string Id, string Name, string Category, string BodyPart,
+record Exercise(string Id, string Name, string? NameEs, string Category, string BodyPart,
     string Equipment, string? InstructionsEn, string Target, string GifUrl);
 record PagedResult<T>(T[] Data, int Total, int Page, int Limit, int TotalPages);`,
 
@@ -1089,7 +1099,8 @@ async Task<PagedResult<Exercise>> GetExercisesFilteredAsync(
 // Usage
 var result = await GetExercisesFilteredAsync(
     category: "Strength", bodyPart: "Chest", page: 1, limit: 20);
-Console.WriteLine(result.Data[0].Name); // e.g. Barbell Bench Press`,
+Console.WriteLine(result.Data[0].Name);   // e.g. Barbell Bench Press
+Console.WriteLine(result.Data[0].NameEs); // e.g. press de banca con barra`,
   },
 
   java: {
@@ -1203,6 +1214,7 @@ function getExercise(string $id): array
 // Usage
 $exercise = getExercise('0001');
 echo $exercise['name'];      // Barbell Bench Press
+echo $exercise['name_es'];   // press de banca con barra
 echo $exercise['category'];  // Strength
 echo $exercise['gif_url'];   // videos/0001.gif`,
 
@@ -1253,7 +1265,8 @@ function getExercisesFiltered(
 
 // Usage
 $result = getExercisesFiltered(1, 20, 'Strength', 'Chest');
-echo $result['data'][0]['name']; // e.g. Barbell Bench Press`,
+echo $result['data'][0]['name'];    // e.g. Barbell Bench Press
+echo $result['data'][0]['name_es']; // e.g. press de banca con barra`,
   },
 
   go: {
@@ -1289,6 +1302,7 @@ func main() {
     exercise, err := GetExercise("0001")
     if err != nil { panic(err) }
     fmt.Println(exercise["name"])     // Barbell Bench Press
+    fmt.Println(exercise["name_es"])  // press de banca con barra
     fmt.Println(exercise["category"]) // Strength
 }`,
 
@@ -1367,7 +1381,8 @@ func main() {
     result, err := GetExercisesFiltered(1, 20, "Strength", "Chest", "")
     if err != nil { panic(err) }
     data := result["data"].([]any)
-    fmt.Println(data[0].(map[string]any)["name"]) // e.g. Barbell Bench Press
+    fmt.Println(data[0].(map[string]any)["name"])    // e.g. Barbell Bench Press
+    fmt.Println(data[0].(map[string]any)["name_es"]) // e.g. press de banca con barra
 }`,
   },
 };
@@ -1383,6 +1398,7 @@ const FRAMEWORK_META = {
   spring:   { name: 'Spring Boot (Java)',    lang: 'Java',       pkg: 'spring-web, spring-data-jpa, db driver', run: 'mvn spring-boot:run' },
   laravel:  { name: 'Laravel (PHP)',         lang: 'PHP',        pkg: 'laravel/laravel, db driver', run: 'php artisan serve' },
   gin:      { name: 'Gin (Go)',              lang: 'Go',         pkg: 'gin-gonic/gin, database/sql + db driver', run: 'go run main.go' },
+  nextjs:   { name: 'Next.js (App Router)',    lang: 'TypeScript', pkg: 'next, react, react-dom, pg', run: 'npm run dev' },
 };
 
 const DB_META = {
@@ -1397,11 +1413,13 @@ function buildLlmPrompt(fwKey, dbKey) {
   const db = DB_META[dbKey];
   const schema = DB_SQL[dbKey];
 
+  if (fwKey === 'nextjs') return buildNextjsPrompt(dbKey, db, schema);
+
   return `You are a senior ${fw.lang} developer. Build a complete REST API using ${fw.name} for an exercise/fitness database.
 
 ## Dataset Overview
 - 1,324 fitness exercises
-- Fields: id (string, e.g. "0001"), name, category, body_part, equipment, instructions_en (full text), instructions_es (Spanish text), instructions_it (Italian text), instructions_tr (Turkish text), instructions_ru (Russian text), instructions_zh (Chinese text), instructions_hi (Hindi text), instructions_pl (Polish text), instructions_ko (Korean text), instructions_fr (French text), muscle_group, secondary_muscles (JSON array of strings), target, image (relative path like "images/0001.jpg"), gif_url (relative path like "videos/0001.gif"), created_at
+- Fields: id (string, e.g. "0001"), name (English), name_es (Spanish name), category, body_part, equipment, instructions_en (full text), instructions_es (Spanish text), instructions_it (Italian text), instructions_tr (Turkish text), instructions_ru (Russian text), instructions_zh (Chinese text), instructions_hi (Hindi text), instructions_pl (Polish text), instructions_ko (Korean text), instructions_fr (French text), muscle_group, secondary_muscles (JSON array of strings), target, image (relative path like "images/0001.jpg"), gif_url (relative path like "videos/0001.gif"), created_at
 
 ## Database Schema (${db.name})
 \`\`\`sql
@@ -1468,6 +1486,100 @@ ${fw.pkg}
 Write clean, production-quality code. Do not skip error handling.`;
 }
 
+function buildNextjsPrompt(dbKey, db, schema) {
+  const driver = {
+    postgresql: 'the `pg` package. Create one Pool in `lib/db.ts` and read the connection string from `DATABASE_URL`.',
+    mysql: 'the `mysql2/promise` package. Create one pool in `lib/db.ts` and read the connection string from `DATABASE_URL`.',
+    mssql: 'the `mssql` package. Create one pool in `lib/db.ts` and read the connection string from `DATABASE_URL`.',
+    sqlite: '`better-sqlite3`. Open the database file from `DATABASE_PATH` in `lib/db.ts`.',
+  }[dbKey];
+
+  return `You are a senior TypeScript developer. Build a Next.js App Router application that exposes a REST API for an exercise/fitness database, backed by ${db.name}.
+
+## Stack
+- Next.js App Router with TypeScript
+- Route Handlers in \`app/api/**/route.ts\`
+- ${db.name} via ${driver}
+- The database client is server-only. Never import it from a Client Component.
+
+## Dataset Overview
+- 1,324 fitness exercises
+- Fields: id (string, e.g. "0001"), name (English), name_es (Spanish name), category, body_part, equipment, instructions_en (full text), instructions_es (Spanish text), instructions_it (Italian text), instructions_tr (Turkish text), instructions_ru (Russian text), instructions_zh (Chinese text), instructions_hi (Hindi text), instructions_pl (Polish text), instructions_ko (Korean text), instructions_fr (French text), muscle_group, secondary_muscles (JSON array of strings), target, image (relative path like "images/0001.jpg"), gif_url (relative path like "videos/0001.gif"), created_at
+
+## Database Schema (${db.name})
+\`\`\`sql
+${schema}
+\`\`\`
+
+## Required Endpoints
+
+### 1. GET /api/exercises/[id]
+- Return a single exercise by its id
+- Return 404 JSON error if not found: { "error": "Exercise not found" }
+
+### 2. GET /api/exercises
+Query parameters (all optional):
+- page (integer, default: 1)
+- limit (integer, default: 20, max: 100)
+- category (string, case-insensitive partial match)
+- body_part (string, case-insensitive partial match)
+- equipment (string, case-insensitive partial match)
+- muscle_group (string, case-insensitive partial match)
+- target (string, case-insensitive partial match)
+
+Response format:
+\`\`\`json
+{
+  "data": [ /* array of exercise objects */ ],
+  "total": 1324,
+  "page": 1,
+  "limit": 20,
+  "totalPages": 67
+}
+\`\`\`
+
+### 3. GET /api/exercises/random
+- Return 1 random exercise object
+
+### 4. GET /api/categories
+- Return sorted array of unique category strings
+
+### 5. GET /api/body-parts
+- Return sorted array of unique body_part strings
+
+### 6. GET /api/equipment
+- Return sorted array of unique equipment strings
+
+## Technical Requirements
+- Read the database connection from an environment variable
+- Use parameterized queries (never interpolate user input into SQL)
+- Return JSON with \`NextResponse.json\`
+- Validate page/limit: must be positive integers; reject with 400 if invalid
+- Return 500 with { "error": "Internal server error" } on unexpected errors
+- \`secondary_muscles\` is stored as JSON text on SQL Server and SQLite, and as JSON on PostgreSQL and MySQL
+- Include both \`name\` (English) and \`name_es\` (Spanish) on every exercise response
+
+## Packages to use
+${dbKey === 'postgresql' ? 'next, react, react-dom, pg' : dbKey === 'mysql' ? 'next, react, react-dom, mysql2' : dbKey === 'mssql' ? 'next, react, react-dom, mssql' : 'next, react, react-dom, better-sqlite3'}
+
+## Deliverables
+1. Complete, runnable source code:
+   - package.json, tsconfig.json, next.config.ts
+   - lib/db.ts
+   - app/api/exercises/route.ts
+   - app/api/exercises/[id]/route.ts
+   - app/api/exercises/random/route.ts
+   - app/api/categories/route.ts
+   - app/api/body-parts/route.ts
+   - app/api/equipment/route.ts
+   - .env.example
+2. Brief setup instructions:
+   - Install dependencies
+   - Run: \`npm run dev\`
+
+Write clean, production-quality TypeScript. Do not skip error handling.`;
+}
+
 // ══════════════════════════════════════════════════
 // ── State ──────────────────────────────────────────
 // ══════════════════════════════════════════════════
@@ -1532,10 +1644,12 @@ function buildInserts(exercises, db) {
     const instrHi = ex.instructions && ex.instructions.hi ? ex.instructions.hi : '';
     const instrPl = ex.instructions && ex.instructions.pl ? ex.instructions.pl : '';
     const instrKo = ex.instructions && ex.instructions.ko ? ex.instructions.ko : '';
+    const nameEs = ex.names && ex.names.es ? ex.names.es : '';
 
     const vals = [
       escStr(ex.id, db),
       escStr(ex.name, db),
+      escStr(nameEs, db),
       escStr(ex.category, db),
       escStr(ex.body_part, db),
       escStr(ex.equipment, db),
@@ -1556,7 +1670,7 @@ function buildInserts(exercises, db) {
       escStr(ex.created_at, db),
     ].join(', ');
 
-    lines.push(`INSERT INTO exercises (id, name, category, body_part, equipment, instructions_en, instructions_es, instructions_it, instructions_tr, instructions_ru, instructions_zh, instructions_hi, instructions_pl, instructions_ko, muscle_group, secondary_muscles, target, image, gif_url, created_at) VALUES (${vals});`);
+    lines.push(`INSERT INTO exercises (id, name, name_es, category, body_part, equipment, instructions_en, instructions_es, instructions_it, instructions_tr, instructions_ru, instructions_zh, instructions_hi, instructions_pl, instructions_ko, muscle_group, secondary_muscles, target, image, gif_url, created_at) VALUES (${vals});`);
 
     if (db === 'mssql' && (i + 1) % 50 === 0 && i + 1 < exercises.length) {
       lines.push('GO');

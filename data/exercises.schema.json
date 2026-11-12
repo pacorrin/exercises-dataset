@@ -58,8 +58,18 @@
         },
         "name": {
           "type": "string",
-          "description": "Full exercise name (e.g. \"3/4 sit-up\").",
+          "description": "Canonical English exercise name (e.g. \"3/4 sit-up\"). Localized names live in `names`.",
           "minLength": 1
+        },
+        "names": {
+          "type": "object",
+          "description": "Exercise name keyed by ISO 639-1 language code. `en` matches `name`.",
+          "properties": {
+            "en": { "type": "string", "minLength": 1 },
+            "es": { "type": "string", "minLength": 1 }
+          },
+          "required": ["en", "es"],
+          "additionalProperties": false
         },
         "category": {
           "type": "string",
@@ -139,6 +149,7 @@
       "required": [
         "id",
         "name",
+        "names",
         "category",
         "body_part",
         "equipment",
